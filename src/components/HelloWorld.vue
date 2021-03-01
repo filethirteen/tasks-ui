@@ -30,7 +30,7 @@
     <div v-for="(task, index) in tasks" :key="task.attributes.taskName+index" class="row">
         <div class="col-8 border bg-dark p-2 m-2">
             <div class="form-check form-check-inline">
-              <input class="form-check-input" type="checkbox" :id="'complete-id-'+index" value="completed">
+              <input class="form-check-input" type="checkbox" :id="'complete-id-'+index" @click="updateTaskCompletion(index)" v-model="tasks[index].attributes.complete" value="completed">
               <label class="form-check-label text-light h5" :for="'complete-id-'+index">{{task.attributes.taskName}}</label>
             </div>
             <div class="row ps-4 text-light">{{task.attributes.taskDescription}}</div>
@@ -48,14 +48,8 @@
 export default {
   name: 'HelloWorld',
   mounted() {
-    //this.fetchTasks();
     this.$nextTick(() => {
       this.fetchTasks();
-      document.querySelectorAll('.form-check-input').forEach(item => {
-        item.addEventListener('click', () => {
-          console.log("Checkbox clicked");
-        });
-      });
     });
   },
   data() {
@@ -106,22 +100,27 @@ export default {
   },
   methods: {
     fetchTasks(){
-        const baseURI = 'http://localhost:7000/tasks';
+        const baseURI = 'https://axios-tasks.herokuapp.com/tasks';
         this.$http.get(baseURI)
         .then((result) => {
           this.tasks = result.data.data;
         });
     },
     patchTask(task){
-      const baseURI = 'http://localhost:7000/tasks/'+task.id;
-      this.$http.patch(baseURI)
+      const baseURI = 'https://axios-tasks.herokuapp.com/tasks/'+task.data.id;
+      const options = {
+        headers: {
+          'Content-Type':'application/vnd.api+json'
+        }
+      };
+      this.$http.patch(baseURI, task, options)
       .then((result) => {
         console.log(result.status);
         this.fetchTasks();
       });
     },
     deleteTask(task){
-      const baseURI = 'http://localhost:7000/tasks/'+task.id;
+      const baseURI = 'https://axios-tasks.herokuapp.com/tasks/'+task.id;
       this.$http.delete(baseURI)
       .then((result) => {
         console.log(result.status);
@@ -129,7 +128,7 @@ export default {
       });
     },
     deleteAllTasks(){
-      const baseURI = 'http://localhost:7000/deleteAll';
+      const baseURI = 'https://axios-tasks.herokuapp.com/deleteAll';
       this.$http.delete(baseURI)
       .then((result) => {
         console.log(result.status);
@@ -152,7 +151,7 @@ export default {
     },
     postTask(task){
       console.log(task);
-      const baseURI = 'http://localhost:7000/tasks/';
+      const baseURI = 'https://axios-tasks.herokuapp.com/tasks/';
       const options = {
         headers: {
           'Content-Type':'application/vnd.api+json'
@@ -192,7 +191,14 @@ export default {
           document.getElementById("floatingTaskDescription").classList.add("is-invalid");
         }
       }
-    }
+    },
+    updateTaskCompletion(index){
+      this.resetTaskModel();
+      this.task.data = this.tasks[index];
+      this.task.data.attributes.complete = document.querySelector('#complete-id-'+index).checked;
+      this.patchTask(this.task);
+      this.resetTaskModel();
+    },
   },
 }
 </script>
